@@ -1,36 +1,146 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Transcript Invoicer
 
-## Getting Started
+Convert consulting session transcripts into professional billable invoices using AI — in under 10 seconds.
 
-First, run the development server:
+## What It Does
+
+Paste a transcript from a client call, and the AI automatically:
+
+1. Extracts a timeline of every consulting activity (troubleshooting, diagnostics, configuration, advisory, etc.)
+2. Groups events into billable service categories using 0.25-hour increments
+3. Generates a client-ready invoice with line items, totals, and business impact
+4. Produces a copy-pasteable client text summary
+5. Creates a detailed internal time log for your records
+6. Exports a professional PDF invoice
+
+## Features
+
+- **AI-Powered Analysis** — Two-stage pipeline: event extraction, then billable reconstruction
+- **Smart Chunking** — Long transcripts (2+ hour calls) are split at natural breaks (speaker changes, pauses, topic shifts) and analyzed in parallel
+- **PDF Export** — Professional invoices generated client-side with @react-pdf/renderer
+- **Client Management** — Auto-saves clients with default rates for repeat billing
+- **Invoice History** — All past invoices stored and searchable
+- **Cloud Storage** — Generated PDFs backed up to Supabase Storage
+- **Auth** — Email/password authentication with row-level security
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, TailwindCSS 4 |
+| Backend | Next.js API Routes |
+| Database | Supabase (Postgres) with RLS |
+| AI | Claude API (Anthropic) |
+| PDF | @react-pdf/renderer |
+| Auth | Supabase Auth |
+| Storage | Supabase Storage |
+| Tests | Vitest |
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- [Supabase](https://supabase.com) account (free tier works)
+- [Anthropic API key](https://console.anthropic.com)
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/YOUR_USERNAME/transcript-invoicer.git
+cd transcript-invoicer
+npm install
+```
+
+### 2. Set up Supabase
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** and run both migration files in order:
+   - `supabase/migrations/001_initial_schema.sql` — creates tables and RLS policies
+   - `supabase/migrations/002_storage_bucket.sql` — creates PDF storage bucket
+3. Go to **Authentication > URL Configuration**:
+   - Set Site URL to `http://localhost:3000`
+   - Add `http://localhost:3000/auth/callback` to Redirect URLs
+
+### 3. Configure environment
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+ANTHROPIC_API_KEY=sk-ant-your-key
+```
+
+### 4. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── analyze-transcript/route.ts   # AI analysis endpoint
+│   │   ├── clients/route.ts              # Client CRUD
+│   │   ├── invoices/upload-pdf/route.ts   # PDF cloud storage
+│   │   ├── profile/route.ts              # User profile
+│   │   └── sessions/                     # Invoice history
+│   ├── auth/callback/route.ts            # OAuth callback
+│   ├── dashboard/page.tsx                # Main app
+│   ├── settings/page.tsx                 # User settings
+│   ├── login/page.tsx
+│   └── signup/page.tsx
+├── components/
+│   ├── analysis-results.tsx              # 5-tab results view
+│   ├── transcript-form.tsx               # Input form with client dropdown
+│   ├── session-list.tsx                  # Invoice history list
+│   ├── invoice-pdf.tsx                   # PDF layout component
+│   └── pdf-download-button.tsx           # PDF generation + upload
+├── lib/
+│   ├── ai/
+│   │   ├── analyze.ts                    # Main pipeline (chunk → analyze → merge)
+│   │   ├── chunker.ts                    # Natural-break transcript splitting
+│   │   ├── merge.ts                      # Multi-chunk result merging
+│   │   ├── prompt.ts                     # System prompt
+│   │   └── __tests__/                    # 14 unit tests
+│   └── supabase/
+│       ├── client.ts                     # Browser client
+│       ├── server.ts                     # Server client
+│       └── middleware.ts                 # Auth middleware
+└── types/index.ts                        # TypeScript types
+```
 
-## Learn More
+## Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx vercel
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Add these environment variables in Vercel dashboard:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `ANTHROPIC_API_KEY`
 
-## Deploy on Vercel
+Update Supabase Auth redirect URLs to include your production domain.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Testing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm test            # Run all tests
+npm run test:watch  # Watch mode
+```
+
+## License
+
+MIT
